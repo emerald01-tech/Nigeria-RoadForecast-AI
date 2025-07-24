@@ -51,7 +51,7 @@ An intelligent system that predicts high-risk road conditions using 5 years of F
   - Standardised row titles and column naming for consistency
 
 ## Python Querry
-     [Get Python Querry]()
+     [Get Python Querry](https://github.com/emerald01-tech/Nigeria-RoadForecast-AI/commit/2a5b165e15ca430a4833cf415b40576b1047a402)
 
 ## Author
 **Murtala Abdulazeez**
