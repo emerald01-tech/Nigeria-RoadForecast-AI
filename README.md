@@ -14,4 +14,4 @@ An AI-powered solution to reduce road fatalities using FRSC crash data (2020-202
 ---
 
 ## See Live Dashboard
-[LIve xlx Dashboard](https://github.com/emerald01-tech/Nigeria-RoadForecast-AI/commit/65ffc934e84bd9746f3b56c89c783185660c6b48)
+[Live xlx Dashboard](https://github.com/emerald01-tech/Nigeria-RoadForecast-AI/commit/65ffc934e84bd9746f3b56c89c783185660c6b48)
