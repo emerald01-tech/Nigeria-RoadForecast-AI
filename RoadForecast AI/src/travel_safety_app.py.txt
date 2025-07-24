@@ -1,0 +1,192 @@
+import pandas as pd
+import tkinter as tk
+from tkinter import ttk, messagebox
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
+
+# ==================== LOAD AND PREPARE DATA ====================
+file_path = "Crash_DataBase_Populated.xlsx"  # Adjust path as needed
+crashes = pd.read_excel(file_path, sheet_name="Crashes")
+casualties = pd.read_excel(file_path, sheet_name="Casaulties")
+
+# Clean column names
+crashes.columns = crashes.columns.str.strip()
+casualties.columns = casualties.columns.str.strip()
+
+# Merge crashes and casualties
+casualties.rename(columns={"CrashID (FK)": "CrashID"}, inplace=True)
+merged_df = pd.merge(crashes, casualties, on="CrashID", how="inner")
+
+# Add FatalOrNot column
+merged_df["FatalOrNot"] = merged_df["Fatalities"].apply(lambda x: 1 if x > 0 else 0)
+
+# Feature selection
+features = ["RoadType", "WeatherCondition", "LightCondition"]
+target = "FatalOrNot"
+
+X = merged_df[features].astype(str)
+y = merged_df[target]
+
+# Label Encoding
+encoder_dict = {}
+for col in features:
+    le = LabelEncoder()
+    X[col] = le.fit_transform(X[col])
+    encoder_dict[col] = le
+
+# Train model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X, y)
+
+# ==================== TKINTER APP ====================
+class TravelSafetyApp:
+    def __init__(self, master):
+        self.master = master
+        master.title("Travel Safety Forecast")
+        
+        # Set window size and center it
+        window_width = 400
+        window_height = 450  # Increased height to accommodate title
+        
+        # Get screen dimensions
+        screen_width = master.winfo_screenwidth()
+        screen_height = master.winfo_screenheight()
+        
+        # Calculate position to center the window
+        x = (screen_width // 2) - (window_width // 2)
+        y = (screen_height // 2) - (window_height // 2)
+        
+        master.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+        self.model = model
+        self.encoder_dict = encoder_dict
+        self.merged_df = merged_df
+
+        # Add title label at the top
+        tk.Label(
+            master, 
+            text="Trip Safety Forecast for Nigeria", 
+            font=("Arial", 14, "bold")
+        ).pack(pady=10)
+
+        # Create a frame for the input widgets
+        input_frame = ttk.Frame(master)
+        input_frame.pack(padx=10, pady=5)
+
+        # Input widgets
+        self.state_cb = self._create_dropdown(input_frame, "Select State:", sorted(merged_df["State"].dropna().unique()), 0)
+        self.road_cb = self._create_dropdown(input_frame, "Select Road Type:", sorted(merged_df["RoadType"].dropna().unique()), 1)
+        self.weather_cb = self._create_dropdown(input_frame, "Select Weather:", sorted(merged_df["WeatherCondition"].dropna().unique()), 2)
+        self.light_cb = self._create_dropdown(input_frame, "Select Light Condition:", sorted(merged_df["LightCondition"].dropna().unique()), 3)
+
+        # Create a frame for buttons
+        button_frame = ttk.Frame(master)
+        button_frame.pack(pady=10)
+
+        # Buttons with colors
+        predict_btn = tk.Button(
+            button_frame, 
+            text="Predict Safety", 
+            command=self.predict,
+            bg="#4CAF50",  # Green color
+            fg="white",
+            padx=10,
+            pady=5,
+            font=('Arial', 10, 'bold')
+        )
+        predict_btn.pack(pady=5, fill=tk.X)
+        
+        quit_btn = tk.Button(
+            button_frame, 
+            text="Quit", 
+            command=self.quit_app,  # Changed to use quit_app method
+            bg="#F44336",  # Red color
+            fg="white",
+            padx=10,
+            pady=5,
+            font=('Arial', 10, 'bold')
+        )
+        quit_btn.pack(pady=5, fill=tk.X)
+
+    def quit_app(self):
+        """Proper quit method that destroys the root window"""
+        self.master.destroy()
+
+    def _create_dropdown(self, parent, label_text, options, row):
+        ttk.Label(parent, text=label_text).grid(row=row, column=0, sticky="w", padx=5, pady=5)
+        cb = ttk.Combobox(parent, values=options, state="readonly")
+        cb.grid(row=row, column=1, padx=5, pady=5, sticky="ew")
+        parent.grid_columnconfigure(1, weight=1)  # Make combobox expand
+        return cb
+
+    def predict(self):
+        try:
+            state = self.state_cb.get()
+            road = self.road_cb.get()
+            weather = self.weather_cb.get()
+            light = self.light_cb.get()
+
+            if not all([state, road, weather, light]):
+                messagebox.showwarning("Input Error", "Please select all fields.")
+                return
+
+            # Encode input
+            input_df = pd.DataFrame([[road, weather, light]], columns=features)
+            for col in features:
+                input_df[col] = self.encoder_dict[col].transform(input_df[col])
+
+            # Prediction
+            prediction = self.model.predict(input_df)[0]
+
+            # Lookup historical match
+            match = self.merged_df[
+                (self.merged_df["State"] == state) &
+                (self.merged_df["RoadType"] == road) &
+                (self.merged_df["WeatherCondition"] == weather) &
+                (self.merged_df["LightCondition"] == light)
+            ]
+
+            if not match.empty:
+                sample_row = match.sample(1).iloc[0]
+                time_str = sample_row['Date'].strftime('%H:%M') if pd.notna(sample_row['Date']) else "N/A"
+                crash_type = sample_row.get('CrashType', 'N/A')
+                cause = sample_row.get('CauseOfCrash', 'N/A')
+                vehicles = sample_row.get('NumVehiclesInvolved', 'N/A')
+                fatalities = sample_row.get('Fatalities', 'N/A')
+                injured = sample_row.get('Injured', 'N/A')
+                
+                accident_details = f"""
+?? Time: {time_str}
+?? Accident Type: {crash_type}
+?? Cause of Crash: {cause}
+?? Vehicles Involved: {vehicles}
+?? Deaths: {fatalities}
+?? Injured: {injured}
+"""
+            else:
+                accident_details = "\n?? No historical accident data available\n"
+
+            msg = f"""
+===== TRAVEL SAFETY REPORT =====
+
+?? State: {state}
+?? Road Type: {road}
+?? Weather: {weather}
+?? Light: {light}
+{accident_details}
+?? Prediction Results:
+?? Safety Score: {"High" if prediction == 0 else "Low"}
+??? Risk Level: {"? Safer Travel Condition" if prediction == 0 else "?? High Risk of Fatal Accident"}
+
+===============================
+"""
+            messagebox.showinfo("Safety Report", msg.strip())
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Prediction failed: {e}")
+
+# ==================== RUN APP ====================
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = TravelSafetyApp(root)
+    root.mainloop()
