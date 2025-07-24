@@ -1,14 +1,14 @@
 # RoadForecast AI: Nigerian Traffic Safety Predictor
 
-![Banner](docs/banner.png) (Optional: Add a visual)
+![Banner](https://github.com/emerald01-tech/Nigeria-RoadForecast-AI/commit/65ffc934e84bd9746f3b56c89c783185660c6b48)
 
 ## Repository Structure
 ```bash
 Nigeria-Traffic-Safety/
 +-- data/               # Crash datasets and reports
-¦   +-- July Knowledge Showcase.pdf
+Â¦   +-- July Knowledge Showcase.pdf
 +-- src/                # Source code
-¦   +-- travel_safety_app.py
+Â¦   +-- travel_safety_app.py
 +-- README.md           # This documentation
 +-- requirements.txt    # Python dependencies
 ```
@@ -40,4 +40,4 @@ Analysis of 43,262 crashes (2020-2024) from FRSC Nigeria, including:
 
 ## Contact
 For dataset access or collaboration:  
-[honeyhive500@gmail.com] | [Your LinkedIn Profile]
+[honeyhive500@gmail.com] | [murtala-abdulazeez-b8b374178]
